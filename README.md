@@ -1,2 +1,4 @@
 # Gabinet_lekarski
-Fragmet kodu z ostatnio zrealizowanego przeze mnie projektu z wykorzystaniem C#, WPF, ,NET, SQL..
+Witam!.
+Repozytorium przedstawia fragmet kodu z ostatnio zrealizowanego przeze mnie projektu z wykorzystaniem C#, WPF, ,.NET, SQL. Referencje zostały załaczone w osobnym pliku.
+:D
