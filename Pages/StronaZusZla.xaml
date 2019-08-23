@@ -1,0 +1,176 @@
+﻿<Page x:Class="GabinetLekarski.Strony.StronaZusZla"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GabinetLekarski.Strony"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="StronaZusZla" Loaded="Page_Loaded">
+
+    <Grid Background="White" >
+
+        <!--BooleanToVisibilityConverter-->
+        <Grid.Resources>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </Grid.Resources>
+
+        <Grid.RowDefinitions >
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+        </Grid.RowDefinitions>
+
+
+        <DataGrid Grid.Row="0" Name="gridKodZusZla" CellEditEnding="gridKodZusZla_CellEditEnding"
+                  CanUserAddRows="False"
+                  FontSize="16"
+                  AutoGenerateColumns="False"
+                  CanUserSortColumns="True"
+                  CanUserReorderColumns="False"
+                  BorderThickness="0"
+                  SelectionMode="Extended"
+                  GridLinesVisibility="Horizontal"
+                  CanUserResizeColumns="True" 
+                  SelectedItem="{Binding MySelectedItem,Mode=TwoWay}">
+
+            <!--Zaznaczenie wiersza-->
+            <DataGrid.RowStyle>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <Style.Triggers>
+                        <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                            <Setter Property="Background" Value="White"></Setter>
+                        </Trigger>
+                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                            <Setter Property="Background" Value="#FFB7D6C0"></Setter>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter Property="Background" Value="LightGray" />
+                            <Setter Property="Foreground" Value="#000" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="true" >
+                            <Setter Property="Background" Value="Gray" />
+                            <Setter Property="Foreground" Value="#000" />
+                        </Trigger>
+                    </Style.Triggers>
+                    <!--Odczytanie indeksu wiersza-->
+                    <EventSetter Event="MouseEnter" Handler="Wiersz_MouseEnter"/>
+                    <EventSetter Event="MouseDown" Handler="Wiersz_MouseDown"/>
+                </Style>
+            </DataGrid.RowStyle>
+
+
+            <DataGrid.Columns>
+                <!--Kod Choroby-->
+                <DataGridTextColumn  Header="Kod choroby" Binding="{Binding KodChoroby}" IsReadOnly="True"/>
+                <!--Opis-->
+                <DataGridTextColumn Header="Opis" Width="*" Binding="{Binding Opis}" IsReadOnly="True"/>
+
+                <!--btn Dodaj-->
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Name="btnDodaj" Click="btnDodajWiersz_Click" 
+                                        Visibility="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGridRow}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Padding="10,1"
+                                        HorizontalContentAlignment="Center"
+                                        BorderBrush="{x:Null}"
+                                        Background="LightGray">
+                                <Button.Content>
+                                    <Image Source="/Images/add.png" Width="14" Height="14"/>
+                                </Button.Content>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--btn Edytuj-->
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Name="btnEdytuj" Click="btnEdytuj_Click"
+                                        Visibility="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGridRow}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Padding="10,1"
+                                        HorizontalContentAlignment="Center" 
+                                        BorderBrush="{x:Null}"
+                                        Background="LightGray">
+                                <Button.Content>
+                                    <Image Source="/Images/modify.png" Width="14" Height="14"/>
+                                </Button.Content>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--Usuń-->
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Name="btnUsun" Click="btnUsun_Click"
+                                        Visibility="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGridRow}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Padding="10,1"
+                                        HorizontalContentAlignment="Center"
+                                        Command="{Binding IDChoroby}" 
+                                        CommandParameter="{Binding ElementName=gridKodZusZla, Path=SelectedIndex}" 
+                                        BorderBrush="{x:Null}"
+                                        Background="LightGray">
+                                <Button.Content>
+                                    <Image Source="/Images/delete.png" Width="14" Height="14"/>
+                                </Button.Content>
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="IsEnabled" Value="True" />
+                                        <Setter Property="Opacity" Value="1" />
+                                        <Style.Triggers>
+
+                                            <DataTrigger Binding="{Binding ElementName=gridKodZusZla, Path=SelectedIndex}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Hidden" />
+                                            </DataTrigger>
+
+
+                                            <Trigger Property="IsMouseOver" Value="true">
+
+                                                <Setter Property="Background" Value="LightGray" />
+                                                <Setter Property="Foreground" Value="#000" />
+                                            </Trigger>
+                                        </Style.Triggers>
+
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Label Name="lblWyszukaj" Content="Szukaj:" FontSize="16"/>
+                <TextBox  Name="txtWyszukaj" FontSize="16" MinWidth="50" TextChanged="txtWyszukaj_TextChanged"/>
+
+                <Button Name="btnUsunSzukana" Click="btnUsunSzukana_Click"
+                    MinWidth="24">
+                    <Button.Content>
+                        <Image Source="/Images/delete.png" Width="14" Height="14"/>
+                    </Button.Content>
+                </Button>
+            </StackPanel>
+
+            <TextBox Grid.Column="2"  Name="txt" IsEnabled="False" FontSize="16" HorizontalAlignment="Right"/>
+            <TextBox Grid.Column="3"  Name="txt2" IsEnabled="False" FontSize="16" HorizontalAlignment="Right"/>
+        </Grid>
+        <Label Grid.Row="2" Name="lblStronaZusZla" 
+               FontSize="16"
+               VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+    </Grid>
+
+</Page> 
+
