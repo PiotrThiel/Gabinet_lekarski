@@ -1,5 +1,5 @@
 # Gabinet_lekarski
-Witam!.
+Witam!
 
 Repozytorium to przedstawia fragmety kodu z ostatnio zrealizowanego przeze mnie projektu z wykorzystaniem C#, WPF, ,.NET, SQL. Referencje zostały załaczone w osobnym pliku.
 
