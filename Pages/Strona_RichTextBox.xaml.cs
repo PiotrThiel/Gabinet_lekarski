@@ -11,6 +11,7 @@ using System.IO;
 using Microsoft.Win32;
 using System.Collections;
 using System.Windows.Markup;
+using GabinetLekarski.Klasy;
 using System.Windows.Media.Imaging;
 using System.Text.RegularExpressions;
 
@@ -25,12 +26,13 @@ namespace GabinetLekarski.Strony
         List<TextRange> listaPozycji = new List<TextRange>();                                                   //służy do przechowywania pozycji szukanych slów
         private string wybraneSlowo;
         private string adresSlownika = @"C:\Gabinet\dictionary.lex";
-        public string sciezkaPlikuRTF = "";                                                                     //sciezka dostepu do pliku
+        public string sciezkaPlikuRTF = "";
         private int parametrStrony;
-        private double margines = 56.69;                                                                        //Margines wydruku - 1,5cm = 56.69 pix. Odejmuję korektę -5 pix na margines mojej drukarki.
+        private double margines = 56.69;
+
         #endregion
 
-        #region Paramerty startowe formularza
+        #region Paramerty startowe strony
 
         //Parametr int zawiera informację do jakiej zakladki będzie RTB ladowany.
         //I w zależności od tego będą różne funkcje przypisywane do przycisku BtnSave.
@@ -39,89 +41,103 @@ namespace GabinetLekarski.Strony
         //3 - Strona_RichTextBox ładowany do zakłdaki SKIEROWANIA
 
         #endregion
+
         public Strona_RichTextBox(StronaWizyta_Zestawienie page, int parametrStrony)
         {
-            InitializeComponent();
-            stronaWizyta_Zestawienie = page;
-            this.parametrStrony = parametrStrony;
+            try
+            {
+                InitializeComponent();
+                stronaWizyta_Zestawienie = page;
+                this.parametrStrony = parametrStrony;
 
-            #region Załadowanie Fontów do kontroli ComboBoc 'cmbFontFamily' w menu
+                cmbFontFamily.ItemsSource = Fonts.SystemFontFamilies.OrderBy(f => f.Source);
+                cmbFontFamily.FontSize = 16;
+                cmbFontSize.ItemsSource = new List<double>() { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
+                cmbFontSize.FontSize = 16;
 
-            cmbFontFamily.ItemsSource = Fonts.SystemFontFamilies.OrderBy(f => f.Source);
-            cmbFontFamily.FontSize = 16;
-            cmbFontSize.ItemsSource = new List<double>() { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
-            cmbFontSize.FontSize = 16;
+                SpellCheck.SetIsEnabled(rtbEditor, true);
+                dictionaries = SpellCheck.GetCustomDictionaries(rtbEditor);
+                dictionaries.Add(new Uri(adresSlownika));
+                rtbEditor.ContextMenu = GetContextMenu();
 
-            #endregion
-            #region SŁOWNIK - dodanie słownika i menu kontekstowego
+                //Drag&Drop
+                rtbEditor.AddHandler(RichTextBox.DragOverEvent, new DragEventHandler(RichTextBox_DragOver), true);
+                rtbEditor.AddHandler(RichTextBox.DropEvent, new DragEventHandler(RichTextBox_Drop), true);
+                rtbEditor.Padding = new Thickness(margines);
+                rtbEditor.AllowDrop = true;
 
-            SpellCheck.SetIsEnabled(rtbEditor, true);                                                                           //Włączenie sprawdzania pisowni
-            dictionaries = SpellCheck.GetCustomDictionaries(rtbEditor);                                                         //Dodanie CUSTOM słownika do RichTexBoxa 'rtbEditor'
-            //dictionaries.Add(new Uri(@"C:\Gabinet\dictionary.lex"));
-            dictionaries.Add(new Uri(adresSlownika));                                                                           //Załadowanie słownika
-            rtbEditor.ContextMenu = GetContextMenu();                                                                          //!!! załadowanie kontext menu
-
-            #endregion
-            #region Drag&Drop
-
-            // Drag&Drop textu z wykorzystaniem System.Windows.Controls (XAML mi nie chodzi, dlaczego?)
-            rtbEditor.AddHandler(RichTextBox.DragOverEvent, new DragEventHandler(RichTextBox_DragOver), true);
-            rtbEditor.AddHandler(RichTextBox.DropEvent, new DragEventHandler(RichTextBox_Drop), true);
-
-            #endregion
-
-            rtbEditor.Padding = new Thickness(margines);                                                    //Ustawiam margines wydruku dla RTB
-            rtbEditor.AllowDrop = true;
-            gdZamien.Visibility = Visibility.Collapsed;
+                gdZamien.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
         }
 
-        #region Przyciski Menu
+        #region Menu
 
         private void RtbEditor_SelectionChanged(object sender, RoutedEventArgs e)
         {
-            //Wytłuszczenie
-            object temp = rtbEditor.Selection.GetPropertyValue(Inline.FontWeightProperty);
-            btnBold.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontWeights.Bold));
-
-            //Podkreślenie
-            temp = rtbEditor.Selection.GetPropertyValue(Inline.FontStyleProperty);
-            if (temp != null)
-                btnUnderline.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextDecorations.Underline));
-
-            //Ustawienie typu czcionki w ComboBox cmbFontFamily
-            temp = rtbEditor.Selection.GetPropertyValue(Inline.FontFamilyProperty);
-            cmbFontFamily.SelectedItem = temp;
-
-            //Ustawienie rozmiaru czcionki w ComboBox cmbFontSize
-            temp = rtbEditor.Selection.GetPropertyValue(Inline.FontSizeProperty);
-            cmbFontSize.Text = temp.ToString();
-        }
-        private void BtnOpen_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "Rich Text Format (*.rtf)|*.rtf|All files (*.*)|*.*";
-            if (dlg.ShowDialog() == true)
+            try
             {
-                FileStream fileStream = new FileStream(dlg.FileName, FileMode.Open);
-                TextRange range = new TextRange(rtbEditor.Document.ContentStart, rtbEditor.Document.ContentEnd);
-                range.Load(fileStream, DataFormats.Rtf);
+                object temp = rtbEditor.Selection.GetPropertyValue(Inline.FontWeightProperty);
+                btnBold.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(FontWeights.Bold));
+
+                temp = rtbEditor.Selection.GetPropertyValue(Inline.FontStyleProperty);
+                if (temp != null)
+                    btnUnderline.IsChecked = (temp != DependencyProperty.UnsetValue) && (temp.Equals(TextDecorations.Underline));
+
+                //Set type of font in ComboBox cmbFontFamily
+                temp = rtbEditor.Selection.GetPropertyValue(Inline.FontFamilyProperty);
+                cmbFontFamily.SelectedItem = temp;
+
+                //Set Size of fot in ComboBox cmbFontSize
+                temp = rtbEditor.Selection.GetPropertyValue(Inline.FontSizeProperty);
+                cmbFontSize.Text = temp.ToString();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
             }
         }
-        private void BtnNew_Click(object sender, RoutedEventArgs e)
+
+        private void BtnOpen_Click(object sender, RoutedEventArgs e)
         {
-            //ramka1.Navigate(new Strona_RichTextBox());
-            //RichTextBox nowy = new RichTextBox();
-            //nowy.Show();
+            try
+            {
+                OpenFileDialog dlg = new OpenFileDialog();
+                dlg.Filter = "Rich Text Format (*.rtf)|*.rtf|All files (*.*)|*.*";
+                if (dlg.ShowDialog() == true)
+                {
+                    FileStream fileStream = new FileStream(dlg.FileName, FileMode.Open);
+                    TextRange range = new TextRange(rtbEditor.Document.ContentStart, rtbEditor.Document.ContentEnd);
+                    range.Load(fileStream, DataFormats.Rtf);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
         }
+
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            stronaWizyta_Zestawienie.ZapiszRTB(parametrStrony, false);         //Zapis RTB za pomocą funkcji ze strony StronaWizyta_Zestawienie
+            stronaWizyta_Zestawienie.ZapiszRTB(parametrStrony, false);
         }
+
         private void CmbFontFamily_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cmbFontFamily.SelectedItem != null)
-                rtbEditor.Selection.ApplyPropertyValue(Inline.FontFamilyProperty, cmbFontFamily.SelectedItem);
+            try
+            {
+                if (cmbFontFamily.SelectedItem != null)
+                    rtbEditor.Selection.ApplyPropertyValue(Inline.FontFamilyProperty, cmbFontFamily.SelectedItem);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
         }
+
         private void CmbFontSize_TextChanged(object sender, TextChangedEventArgs e)
         {
             try
@@ -135,42 +151,41 @@ namespace GabinetLekarski.Strony
                 {
                     cmbFontSize.Text = "";
                 }
-
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                ErrorMessage(ex);
             }
 
         }
 
 
         #endregion
-        #region CONTEXT MENU i Słownik dla RICHTEXTBOXa
+        #region Context menu & Dictionary
 
-        private ContextMenu GetContextMenu()            // Nowy context menu dla Textoxa. 
+        private ContextMenu GetContextMenu()     
         {
             ContextMenu cm = new ContextMenu();
             return cm;
         }
-        private void RtbEditor_ContextMenuOpening(object sender, ContextMenuEventArgs e)  //Funkcja wywoływana w momencie kliknieca PKM - w RichTextBoxie
+
+        private void RtbEditor_ContextMenuOpening(object sender, ContextMenuEventArgs e) 
         {
+            //Funkcja wywołuje menu kontekstowe w momencie kliknieca PKM - w RichTextBoxie
             try
             {
-                #region Zmienne
+                ContextMenu cm = new ContextMenu();   
+                rtbEditor.ContextMenu = cm;         
+                int contextIndex = 0;                                                   
+                SpellingError spellingError;                                 
 
-                ContextMenu cm = new ContextMenu();                                 //nowy obiekt context menu
-                rtbEditor.ContextMenu = cm;                                         //przypisanie go do RichTextoxa
-                int cmdIndex = 0;                                                   //ineks dla context menu
-                SpellingError spellingError;                                        //obiekt zwracający sugestie poprawnych słów w przypadku wykrycią błedu 
-
-                #endregion
                 #region === CONTEXTMENU TEXTBOX ----------------------------------
 
                 spellingError = rtbEditor.GetSpellingError(rtbEditor.CaretPosition);
-                if (spellingError != null)  //Menu pojawiające się w przypadku zaznaczenia tekstu z błednym słowem
+                //error menu
+                if (spellingError != null) 
                 {
-                    #region --- załadowanie sugestii dotyczących błednego wyrazu ---
+                    //Load sugestions of wrong word
                     foreach (string str in spellingError.Suggestions)
                     {
                         MenuItem mi = new MenuItem();
@@ -179,30 +194,29 @@ namespace GabinetLekarski.Strony
                         mi.Command = EditingCommands.CorrectSpellingError;
                         mi.CommandParameter = str;
                         mi.CommandTarget = rtbEditor;
-                        rtbEditor.ContextMenu.Items.Insert(cmdIndex, mi);
-                        cmdIndex++;
+                        rtbEditor.ContextMenu.Items.Insert(contextIndex, mi);
+                        contextIndex++;
                     }
 
-                    #endregion
                     #region --- separator ------------------------------------------
 
                     Separator separatorMenuItem1 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem1);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem1);
 
                     #endregion
-                    #region --- Zignoruj wszystkie ---------------------------------
+                    #region --- Ignore all -----------------------------------------
 
-                    cmdIndex++;                                                                             //Zwiększenie indeksu 
+                    contextIndex++;                                                                         
                     MenuItem ignorujSlowa = new MenuItem();
                     ignorujSlowa.Header = "Zignoruj wszystkie";
                     ignorujSlowa.Command = EditingCommands.IgnoreSpellingError;
                     ignorujSlowa.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, ignorujSlowa);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, ignorujSlowa);
 
                     #endregion
-                    #region --- Dodaj do słownika ----------------------------------
+                    #region --- Add to dictionary ----------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Dodaj = new MenuItem
                     {
                         Header = "Dodaj do słownika",
@@ -210,24 +224,24 @@ namespace GabinetLekarski.Strony
                     };
 
                     Dodaj.Click += new RoutedEventHandler(MenuItem_Dodaj_Click);
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Dodaj);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Dodaj);
 
                     #endregion
                     #region --- separator ------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     Separator separatorMenuItem2 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem2);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem2);
 
                     #endregion
-                    #region --- Wytnij ---------------------------------------------
+                    #region --- Cut ------------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Wytnij = new MenuItem();
                     Wytnij.Header = "Wytnij";
                     Wytnij.Command = ApplicationCommands.Cut;
                     Wytnij.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Wytnij);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Wytnij);
                     Wytnij.Icon = new System.Windows.Controls.Image
                     {
 
@@ -236,14 +250,14 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kopiuj ---------------------------------------------
+                    #region --- Copy -----------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Kopiuj = new MenuItem();
                     Kopiuj.Header = "Kopiuj";
                     Kopiuj.Command = ApplicationCommands.Copy;
                     Kopiuj.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Kopiuj);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Kopiuj);
                     Kopiuj.Icon = new System.Windows.Controls.Image
                     {
                         Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(@"/Images/kopiuj.png", UriKind.Relative)),
@@ -251,14 +265,14 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Wklej ----------------------------------------------
+                    #region --- Insert ---------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Wklej = new MenuItem();
                     Wklej.Header = "Wklej";
                     Wklej.Command = ApplicationCommands.Paste;
                     Wklej.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Wklej);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Wklej);
                     Wklej.Icon = new System.Windows.Controls.Image
                     {
                         Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(@"/Images/wklej.png", UriKind.Relative)),
@@ -266,10 +280,10 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Zaznaczenie wybranego słowa ------------------------
+                    #region --- Select word ----------------------------------------
 
-                    cmdIndex++;
                     //Zaznaczenie wybranego słowa i pobranie so zmiennej 'wybraneSlowo'
+                    contextIndex++;
                     TextRange left = ExtendSelection(LogicalDirection.Backward);
                     TextRange right = ExtendSelection(LogicalDirection.Forward);
                     if (!left.IsEmpty && !right.IsEmpty)
@@ -281,17 +295,16 @@ namespace GabinetLekarski.Strony
                     #endregion
                     #region --- separator ------------------------------------------
 
-
                     Separator separatorMenuItem3 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem3);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem3);
 
                     #endregion
-                    #region --- Format tekstu --------------------------------------
+                    #region --- Text format ----------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem formatujTekst = new MenuItem();
                     formatujTekst.Header = "Format tekstu";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, formatujTekst);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, formatujTekst);
                     formatujTekst.Click += FormatujTekst_Click;
                     formatujTekst.Icon = new System.Windows.Controls.Image
                     {
@@ -300,12 +313,12 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kolor tekstu ---------------------------------------
+                    #region --- Text color -----------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem kolorTekstu = new MenuItem();
                     kolorTekstu.Header = "Kolor tekstu";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, kolorTekstu);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, kolorTekstu);
                     kolorTekstu.Click += KolorTekstu_Click;
                     kolorTekstu.Icon = new System.Windows.Controls.Image
                     {
@@ -314,12 +327,12 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kolor podłoża --------------------------------------
+                    #region --- Background color -----------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem kolorPodloza = new MenuItem();
                     kolorPodloza.Header = "Kolor podłoża";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, kolorPodloza);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, kolorPodloza);
                     kolorPodloza.Click += KolorPodloza_Click;
                     kolorPodloza.Icon = new System.Windows.Controls.Image
                     {
@@ -330,30 +343,30 @@ namespace GabinetLekarski.Strony
                     #endregion
                     #region --- separator ------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     Separator separatorMenuItem4 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem4);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem4);
 
                     #endregion
-                    #region --- Zamień tekst ---------------------------------------
+                    #region --- Change text ----------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem zamienTekst = new MenuItem();
                     zamienTekst.Header = "Zamień tekst";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, zamienTekst);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, zamienTekst);
                     zamienTekst.Click += ZamienTekst_Click;
 
                     #endregion
                 }
-                else  //Menu pojawiające się w przypadku zaznaczenia tekstu nie będacym błednym słowem
+                else  //Standard menu
                 {
-                    #region --- Wytnij ---------------------------------------------
+                    #region --- Cut ------------------------------------------------
 
                     MenuItem Wytnij = new MenuItem();
                     Wytnij.Header = "Wytnij";
                     Wytnij.Command = ApplicationCommands.Cut;
                     Wytnij.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Wytnij);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Wytnij);
                     Wytnij.Icon = new System.Windows.Controls.Image
                     {
 
@@ -362,14 +375,14 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kopiuj ---------------------------------------------
+                    #region --- Copy -----------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Kopiuj = new MenuItem();
                     Kopiuj.Header = "Kopiuj";
                     Kopiuj.Command = ApplicationCommands.Copy;
                     Kopiuj.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Kopiuj);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Kopiuj);
                     Kopiuj.Icon = new System.Windows.Controls.Image
                     {
                         Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(@"/Images/kopiuj.png", UriKind.Relative)),
@@ -377,14 +390,14 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Wklej ----------------------------------------------
+                    #region --- Insert ---------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem Wklej = new MenuItem();
                     Wklej.Header = "Wklej";
                     Wklej.Command = ApplicationCommands.Paste;
                     Wklej.CommandTarget = rtbEditor;
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, Wklej);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, Wklej);
                     Wklej.Icon = new System.Windows.Controls.Image
                     {
                         Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(@"/Images/wklej.png", UriKind.Relative)),
@@ -394,17 +407,17 @@ namespace GabinetLekarski.Strony
                     #endregion
                     #region --- separator ------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     Separator separatorMenuItem3 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem3);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem3);
 
                     #endregion
-                    #region --- Format tekstu --------------------------------------
+                    #region --- Text formt -----------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem formatujTekst = new MenuItem();
                     formatujTekst.Header = "Format tekstu";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, formatujTekst);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, formatujTekst);
                     formatujTekst.Click += FormatujTekst_Click;
                     formatujTekst.Icon = new System.Windows.Controls.Image
                     {
@@ -413,12 +426,12 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kolor tekstu ---------------------------------------
+                    #region --- Tekst color ----------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem kolorTekstu = new MenuItem();
                     kolorTekstu.Header = "Kolor tekstu";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, kolorTekstu);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, kolorTekstu);
                     kolorTekstu.Click += KolorTekstu_Click;
                     kolorTekstu.Icon = new System.Windows.Controls.Image
                     {
@@ -427,12 +440,12 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Kolor podłoża --------------------------------------
+                    #region --- Backgroud color ------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem kolorPodloza = new MenuItem();
                     kolorPodloza.Header = "Kolor podłoża";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, kolorPodloza);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, kolorPodloza);
                     kolorPodloza.Click += KolorPodloza_Click;
                     kolorPodloza.Icon = new System.Windows.Controls.Image
                     {
@@ -441,19 +454,19 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Zaznacz obrazy -------------------------------------
+                    #region --- Select picture -------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem zaznaczObrazy = new MenuItem();
                     zaznaczObrazy.Header = "Zaznacz obrazy";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, zaznaczObrazy);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, zaznaczObrazy);
                     zaznaczObrazy.Icon = new System.Windows.Controls.Image
                     {
                         Source = new BitmapImage(new Uri(@"/Images/zmien-rozmiar-16.png", UriKind.Relative)),
                         VerticalAlignment = VerticalAlignment.Center,
                     };
                     #endregion
-                    #region --- Zaznacz obrazy Proporcjonlanie ---------------------
+                    #region --- Select picture - proportionally --------------------
 
                     MenuItem zaznaczProporcjonalnie = new MenuItem();
                     zaznaczObrazy.Items.Add(zaznaczProporcjonalnie);
@@ -467,7 +480,7 @@ namespace GabinetLekarski.Strony
                     };
 
                     #endregion
-                    #region --- Zaznacz obrazy Dowolnie ----------------------------
+                    #region --- Select picture - freely ----------------------------
 
                     MenuItem zaznaczDowolnie = new MenuItem();
                     zaznaczObrazy.Items.Add(zaznaczDowolnie);
@@ -482,12 +495,12 @@ namespace GabinetLekarski.Strony
 
 
                     #endregion
-                    #region --- Odznacz obrazy -------------------------------------
+                    #region --- Unselect picture -----------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem odznaczObrazy = new MenuItem();
                     odznaczObrazy.Header = "Odznacz obrazy";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, odznaczObrazy);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, odznaczObrazy);
                     odznaczObrazy.Click += OdznaczObrazy_Click;
                     odznaczObrazy.Icon = new System.Windows.Controls.Image
                     {
@@ -498,17 +511,17 @@ namespace GabinetLekarski.Strony
                     #endregion
                     #region --- separator ------------------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     Separator separatorMenuItem4 = new Separator();
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, separatorMenuItem4);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, separatorMenuItem4);
 
                     #endregion
-                    #region --- Zamień tekst ---------------------------------------
+                    #region --- Change text tekst ----------------------------------
 
-                    cmdIndex++;
+                    contextIndex++;
                     MenuItem zamienTekst = new MenuItem();
                     zamienTekst.Header = "Zamień tekst";
-                    rtbEditor.ContextMenu.Items.Insert(cmdIndex, zamienTekst);
+                    rtbEditor.ContextMenu.Items.Insert(contextIndex, zamienTekst);
                     zamienTekst.Click += ZamienTekst_Click;
 
                     #endregion
@@ -517,11 +530,11 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ErrorMessage(ex);
             }
         }
 
-        #region Funkcje CONTEXTMENU TEXTBOX 
+        #region Context menu function's 
 
         private void KolorTekstu_Click(object sender, RoutedEventArgs e)
         {
@@ -537,9 +550,10 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ErrorMessage(ex);
             }
         }
+
         private void KolorPodloza_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -554,21 +568,47 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ErrorMessage(ex);
             }
         }
+
         private void ZaznaczObrazyProp_Click(object sender, RoutedEventArgs e)
         {
-            ResizeImages(true, true);
+            try
+            {
+                ResizeImages(true, true);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
+            
         }
+
         private void ZaznaczObrazyDow_Click(object sender, RoutedEventArgs e)
         {
-            ResizeImages(true, false);
+            try
+            {
+                ResizeImages(true, false);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
         }
+
         private void OdznaczObrazy_Click(object sender, RoutedEventArgs e)
         {
-            ResizeImages(false, true);
+            try
+            {
+                ResizeImages(false, true);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
         }
+
         private void ZamienTekst_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -582,12 +622,13 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ErrorMessage(ex);
             }
         }
 
-        private TextRange ExtendSelection(LogicalDirection direction)                                                               //do nowego kontext menu w RTB --- Zaznaczenie wybranego słowa ---
+        private TextRange ExtendSelection(LogicalDirection direction)
         {
+            //For new context menu in RTB --- Extendet selected word
             TextRange tr = new TextRange(rtbEditor.CaretPosition, rtbEditor.CaretPosition.GetInsertionPosition(direction));
             bool found = false;
             while (!found)
@@ -609,7 +650,6 @@ namespace GabinetLekarski.Strony
                         next = tr.Start.GetNextInsertionPosition(direction);
                     }
 
-                    // Be careful with boundaries!
                     if (next != null)
                     {
                         TextRange trNext = new TextRange(rtbEditor.CaretPosition, next);
@@ -635,25 +675,33 @@ namespace GabinetLekarski.Strony
             }
             return tr;
         }
-        private void MenuItem_Dodaj_Click(object sender, EventArgs e)                                                               //do nowego kontext menu w RTB --- Zaznaczenie wybranego słowa ---
+
+        private void MenuItem_Dodaj_Click(object sender, EventArgs e)
         {
-            //ZAPIS DO SŁOWNIKA
-            dictionaries.Remove(new Uri(@"C:\Gabinet\dictionary.lex"));                                                                //Odłaczenie słownika
-            if (!File.Exists(@"C:\Gabinet\dictionary.lex"))                                                                            //Utworzenie pliku słownika jak go nie ma
+            try
             {
-                StreamWriter sw2 = File.CreateText(@"C:\Gabinet\dictionary.lex");
-                sw2.Close();
+                //Save into dictionary
+                dictionaries.Remove(new Uri(@"C:\Gabinet\dictionary.lex"));                                                                //Odłaczenie słownika
+                if (!File.Exists(@"C:\Gabinet\dictionary.lex"))                                                                            //Utworzenie pliku słownika jak go nie ma
+                {
+                    StreamWriter sw2 = File.CreateText(@"C:\Gabinet\dictionary.lex");
+                    sw2.Close();
+                }
+                else 
+                {
+                    FileStream fs = File.OpenWrite(@"C:\Gabinet\dictionary.lex");
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.BaseStream.Seek(0, SeekOrigin.End);                                                                              //oznacza ustawienie wskaźnika na końcu pliku.
+                    sw.WriteLine(wybraneSlowo);
+                    sw.Close();
+                    fs.Close();
+                }
+                dictionaries.Add(new Uri(@"C:\Gabinet\dictionary.lex"));
             }
-            else    //zapis słowa do słownika
+            catch (Exception ex)
             {
-                FileStream fs = File.OpenWrite(@"C:\Gabinet\dictionary.lex");
-                StreamWriter sw = new StreamWriter(fs);
-                sw.BaseStream.Seek(0, SeekOrigin.End);                                                                              //oznacza ustawienie wskaźnika na końcu pliku.
-                sw.WriteLine(wybraneSlowo);
-                sw.Close();
-                fs.Close();
+                ErrorMessage(ex);
             }
-            dictionaries.Add(new Uri(@"C:\Gabinet\dictionary.lex"));
         }
 
         private void FormatujTekst_Click(object sender, RoutedEventArgs e)
@@ -675,9 +723,10 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                ErrorMessage(ex);
             }
         }
+
         private void ResizeImages(bool wlaczycZnaczniki, bool rozcProporcjonalne)
         {
             #region Opis funkcji [ResizeImages]
@@ -691,51 +740,65 @@ namespace GabinetLekarski.Strony
              *    - false - rozciąganie w dowolnym kirunku
              */
             #endregion
-            IEnumerable<Image> images = rtbEditor.Document.Blocks.OfType<BlockUIContainer>()
-                .Select(c => c.Child).OfType<Image>()
-                .Union(rtbEditor.Document.Blocks.OfType<Paragraph>()
-                .SelectMany(pg => pg.Inlines.OfType<InlineUIContainer>())
-                .Select(inline => inline.Child).OfType<Image>());
-
-            foreach (var image in images)
+            try
             {
-                AdornerLayer adornerLayer = AdornerLayer.GetAdornerLayer(image);
-                if (adornerLayer != null) //true - włączenie znaczników
+                IEnumerable<Image> images = rtbEditor.Document.Blocks.OfType<BlockUIContainer>()
+                    .Select(c => c.Child).OfType<Image>()
+                    .Union(rtbEditor.Document.Blocks.OfType<Paragraph>()
+                    .SelectMany(pg => pg.Inlines.OfType<InlineUIContainer>())
+                    .Select(inline => inline.Child).OfType<Image>());
+
+                foreach (var image in images)
                 {
-                    if (wlaczycZnaczniki)
+                    AdornerLayer adornerLayer = AdornerLayer.GetAdornerLayer(image);
+                    if (adornerLayer != null)
                     {
-                        adornerLayer.Add(new ResizingAdorner(image, rozcProporcjonalne));  //true - rozciąganie proporcjonalne, false - rozciąganie w dowolnym kirunku
-                    }
-                    else  //false - wyłączenie znaczników
-                    {
-                        Adorner[] toRemoveArray = adornerLayer.GetAdorners(image);
-                        Adorner toRemove;
-                        if (toRemoveArray != null)
+                        if (wlaczycZnaczniki)
                         {
-                            toRemove = toRemoveArray[0];
-                            adornerLayer.Remove(toRemove);
+                            adornerLayer.Add(new ResizingAdorner(image, rozcProporcjonalne)); 
+                        }
+                        else 
+                        {
+                            Adorner[] toRemoveArray = adornerLayer.GetAdorners(image);
+                            Adorner toRemove;
+                            if (toRemoveArray != null)
+                            {
+                                toRemove = toRemoveArray[0];
+                                adornerLayer.Remove(toRemove);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
             }
         }
 
         #endregion
 
         #endregion
-        #region Funkcje Drag & Drop
+        #region Drag & Drop Function's
 
         private void RichTextBox_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            try
             {
-                e.Effects = DragDropEffects.All;
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    e.Effects = DragDropEffects.All;
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+                e.Handled = false;
             }
-            else
+            catch (Exception ex)
             {
-                e.Effects = DragDropEffects.None;
+                ErrorMessage(ex);
             }
-            e.Handled = false;
         }
         private void RichTextBox_Drop(object sender, DragEventArgs e)
         {
@@ -746,43 +809,32 @@ namespace GabinetLekarski.Strony
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                ErrorMessage(ex);
             }
         }
-      
-
+        
         #endregion
         #region PRINT    
 
         private void btnPrintRTB_Click(object sender, RoutedEventArgs e)
         {
+            //Print RTB file
             try
             {
-
-                FrmPodgladWydruku frmPodgladWydruku = new FrmPodgladWydruku(rtbEditor);
-                frmPodgladWydruku.ShowDialog();
-
-                #region Print - XpsDocumentWriter (rtbEditor.Document)
-
                 FlowDocument document = rtbEditor.Document;
 
-                //Tworzę kopię FlowDocument pod wydruk 
+                //Make copy of FlowDocument for pritning - witch pictures
                 string copyString = XamlWriter.Save(rtbEditor.Document);
                 FlowDocument kopiaFlowDocument = XamlReader.Parse(copyString) as FlowDocument;
                 MemoryStream memorySrteam = new MemoryStream();                                                                     //Przygotowanie się do przechowywania zawartości w pamięci
 
-                //Utworzenie obiektu XpsDocumentWriter, niejawnie otwierając okno dialogowe wspólnego drukowania w systemie Windows, pozwalając użytkownikowi wybrać drukarkę.
-                //i pobranie informacje o wymiarach wybranej drukarki i nośnika.
-   
-
                 System.Printing.PrintDocumentImageableArea ia = null;
                 System.Windows.Xps.XpsDocumentWriter docWriter = System.Printing.PrintQueue.CreateXpsDocumentWriter(ref ia);        //tu następuje otwarcie okno dialogowego drukowania który zwraca prarametr - referencje: ia
                                                                                                                                     //parametr (ia) reprezentuje informacje o obszarze obrazowania i wymiarze nośnika.
-                                                                                                                                    //rozmiar strony fizyczny: 
                 if (docWriter != null && ia != null)
                 {
                     DocumentPaginator paginator = ((IDocumentPaginatorSource)kopiaFlowDocument).DocumentPaginator;                  ///Dzielenie zawartości na strony.
-                    //Zmiana rozmiar PageSize i PagePadding dla dokumentu tak, aby pasował do CanvasSize drukarki.
+                    //Change size PageSize and PagePadding of document - for CanvasSize 
                     paginator.PageSize = new Size(ia.MediaSizeWidth, ia.MediaSizeHeight);                                           //Ustawia rozmiar stron zgodnie z wymiarem fizycznym kartki papieru. (793/1122)
                     Thickness t = new Thickness(margines + kopiaFlowDocument.PagePadding.Left);                                     //Ustawiam marginesy wydruku w PagePadding. Należy zastosować korektę o starowy margines drukarki . Tu daje tyle co RichTextBox Domyślnie pobiera z drukarki i wynoszą (5,0,5,0) piksela 
                     kopiaFlowDocument.PagePadding = new Thickness(                                                                  //Ustawienie nowego obszaru zadrukowania strony PagePadding
@@ -791,50 +843,56 @@ namespace GabinetLekarski.Strony
                                        Math.Max(ia.MediaSizeWidth - (ia.OriginWidth + ia.ExtentWidth), t.Right),
                                        Math.Max(ia.MediaSizeHeight - (ia.OriginHeight + ia.ExtentHeight), t.Bottom));
                     kopiaFlowDocument.ColumnWidth = double.PositiveInfinity;                                                        //Ustawienie szerokości kolumny drukowanej. double.PositiveInfinity - reprezentuje nieskończoności dodatniej. To pole jest stałe.
-                      docWriter.Write(paginator);
+                    // Send content to the printer.
+                    docWriter.Write(paginator);
 
 
                 }
-                //Czyszczenie pamieci
+                
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-                memorySrteam.Dispose();                                                                                              //Zwolnienie zasobów pamięci
-                #endregion
+                GC.Collect();
+                memorySrteam.Dispose();                                                                                              
             }
 
             catch (Exception ex)
             {
-                //MessageBox.Show("Nastąpij wyjątek w działaniu programu: \n\n" + ex.ToString(), "Wyjątek", MessageBoxButton.OK, MessageBoxImage.Warning);
-                MessageBox.Show(ex.ToString());
+                ErrorMessage(ex);
             }
         }
 
         #endregion
-        #region Funkcja zamiany tekstu 
+        #region Funkcja Text change functions 
 
         private void BtnSzukaj_Click(object sender, RoutedEventArgs e)
         {
-
-            string szukaneSlowo = txbSzukaj.Text;
-            IEnumerable<TextRange> wordRanges = GetAllWordRanges(rtbEditor.Document);
-            foreach (TextRange wordRange in wordRanges)
+            try
             {
-                if (wordRange.Text == szukaneSlowo)
+                string szukaneSlowo = txbSzukaj.Text;
+                IEnumerable<TextRange> wordRanges = GetAllWordRanges(rtbEditor.Document);
+                foreach (TextRange wordRange in wordRanges)
                 {
-                    listaPozycji.Add(wordRange);
-                    //wordRange.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Red);
-                    wordRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
-                    rtbEditor.Selection.Select(wordRange.Start, wordRange.End);
+                    if (wordRange.Text == szukaneSlowo)
+                    {
+                        listaPozycji.Add(wordRange);
+                        wordRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
+                        rtbEditor.Selection.Select(wordRange.Start, wordRange.End);
+                    }
                 }
-            }
 
-            foreach (TextRange pozycja in listaPozycji)
+                foreach (TextRange pozycja in listaPozycji)
+                {
+                    rtbEditor.Selection.Select(pozycja.Start, pozycja.End);
+                }
+                listaPozycji.Clear();
+
+            }
+            catch (Exception ex)
             {
-                rtbEditor.Selection.Select(pozycja.Start, pozycja.End);
-            }
-            listaPozycji.Clear();
-
+                ErrorMessage(ex);
+            }            
         }
+
         public static IEnumerable<TextRange> GetAllWordRanges(FlowDocument document)
         {
             string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
@@ -917,12 +975,25 @@ namespace GabinetLekarski.Strony
 
         private void rtbEditor_MouseMove(object sender, MouseEventArgs e)
         {
-            //pobranie pozycji kursora
-            TextPointer startPtr = rtbEditor.Document.ContentStart;
+            try
+            {
+                ///* get start pointer */
+                TextPointer startPtr = rtbEditor.Document.ContentStart;
 
-            //pobranie pozycji karetki
-            int start = startPtr.GetOffsetToPosition(rtbEditor.CaretPosition);
-            txtSzukaj.Content = Convert.ToString(start);
+                ///* get current caret position */
+                int start = startPtr.GetOffsetToPosition(rtbEditor.CaretPosition);
+
+                txtSzukaj.Content = Convert.ToString(start);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage(ex);
+            }
+        }
+
+        private void ErrorMessage(Exception ex)
+        {
+            MessageBox.Show("Nastąpij wyjątek w działaniu programu: \n\n" + ex.ToString(), "Wyjątek", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

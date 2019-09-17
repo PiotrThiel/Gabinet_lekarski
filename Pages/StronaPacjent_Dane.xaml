@@ -1,0 +1,193 @@
+﻿<Page x:Class="GabinetLekarski.Strony.StronaPacjent_Dane"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      mc:Ignorable="d" 
+      Title="Dane pacjenta" 
+      MinHeight="400"
+      MinWidth="500"
+      MaxWidth="600"
+      Background="LightGray" 
+      Loaded="Page_Loaded">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Name="txtIDPacjenta" 
+                   Visibility="Visible" 
+                   MinWidth="30"
+                   HorizontalAlignment="Right"/>
+        <Label Grid.Row="0" x:Name="labTytul" 
+               Content="Wstaw dane "  
+               Margin="0,0,215,0" 
+               FontSize="18"  
+               HorizontalContentAlignment="Center" 
+               Padding="1,1,1,1" 
+               FontWeight="Bold" 
+               FontStyle="Italic" HorizontalAlignment="Right" />
+        <GroupBox Grid.Row="1" Name="gbDanePacjenta"
+                  FontSize="14" 
+                  FontWeight="SemiBold" 
+                  Margin="10,0,10,0" 
+                  VerticalAlignment="Top" 
+                  Foreground="Green" 
+                  FontStyle="Italic" 
+                  BorderBrush="Green" 
+                  MinWidth="390" 
+                  Height="175" 
+                  MinHeight="175" 
+                  MaxWidth="800" 
+                  MaxHeight="175">
+            <GroupBox.Header>Dane pacjenta</GroupBox.Header>
+            <Grid MinWidth="350" MinHeight="150" >
+                <Label x:Name="labImie"         Height="29" Content="Imię"      HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="10,10,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labNazwisko"     Height="29" Content="Nazwisko"  HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="10,44,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labTelefon"      Height="29" Content="Telefon"   HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="10,78,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labPesel"        Height="29" Content="Pesel"     HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="10,112,0,0"     FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <TextBox x:Name="txtImie"       Height="29"                     HorizontalContentAlignment="Stretch"    VerticalAlignment="Top"     Margin="110,10,10,0"    FontStyle="Normal" FontWeight="Normal" FontSize="16" MinWidth="235" UndoLimit="50" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" TabIndex="1" TextChanged="TextChanged"/>
+                <TextBox x:Name="txtNazwisko"   Height="29"                     HorizontalContentAlignment="Stretch"    VerticalAlignment="Top"     Margin="110,44,10,0"    FontStyle="Normal" FontWeight="Normal" FontSize="16" MinWidth="235" UndoLimit="50" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" TabIndex="2" TextChanged="TextChanged"/>
+                <TextBox x:Name="txtTelefon"    Height="29"                     HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="110,78,0,0"     FontStyle="Normal" FontWeight="Normal" FontSize="16" MinWidth="175" UndoLimit="15" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" TabIndex="3" TextChanged="TextChanged"/>
+                <TextBox x:Name="txtPesel"      Height="29"                     HorizontalAlignment="Left"              VerticalAlignment="Top"     Margin="110,112,0,0"    FontStyle="Normal" FontWeight="Normal" FontSize="16" MinWidth="175" UndoLimit="50" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" MaxLength="11" TabIndex="4" TextChanged="TextChanged" />
+            </Grid>
+        </GroupBox>
+        <GroupBox Grid.Row="2" Name="gbAdres"
+                  Margin="10,0,10,0" 
+                  FontSize="14" 
+                  FontWeight="SemiBold" 
+                  VerticalAlignment="Top" 
+                  Foreground="Green" 
+                  FontStyle="Italic" 
+                  BorderBrush="Green" 
+                  MinWidth="390" 
+                  Height="175" 
+                  MinHeight="175" 
+                  MaxWidth="800" 
+                  MaxHeight="175">
+            <GroupBox.Header>Adres</GroupBox.Header>
+            <Grid MinWidth="350" MinHeight="150">
+                <Label x:Name="labUlica"            Height="29" Content="Ulica"         VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="10,10,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labDom"              Height="29" Content="Nr domu"       VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="10,44,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labKodPocz"          Height="29" Content="Kod pocztowy"  VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="10,78,0,0"      FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100"/>
+                <Label x:Name="labMiejscowosc"      Height="29" Content="Miejscowość"   VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="10,112,0,0"     FontStyle="Normal" FontWeight="Normal" FontSize="14" Width="100" />
+                <TextBox x:Name="txtUlica"          Height="29"                         VerticalAlignment="Top" HorizontalContentAlignment="Stretch"    Margin="110,10,10,0"    FontStyle="Normal" FontWeight="Normal" FontSize="16" MinWidth="235" UndoLimit="50" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" TabIndex="5" TextChanged="TextChanged"/>
+                <TextBox x:Name="txtDom"            Height="29"                         VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="110,44,0,0"     FontStyle="Normal" FontWeight="Normal" FontSize="16" Width="80"     UndoLimit="50" Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" TabIndex="6" TextChanged="TextChanged"/>
+                <TextBox x:Name="txtKodPocztowy"    Height="29"                         VerticalAlignment="Top" HorizontalAlignment="Left"              Margin="110,78,0,0"     FontStyle="Normal" FontWeight="Normal" FontSize="16" Width="80"     UndoLimit="9"  Padding="1,2,1,1" MaxLines="1" Grid.IsSharedSizeScope="True" MaxLength="6" TabIndex="7" TextChanged="TextChanged"/>
+                <ComboBox x:Name="cmbMiejscowosc" LostFocus="cmbMiejscowosc_LostFocus" MouseDoubleClick="cmbMiejscowosc_MouseDoubleClick"
+                          IsEditable="true" 
+                          HorizontalAlignment="Left" 
+                          Margin="110,112,0,0" 
+                          VerticalAlignment="Top" 
+                          Width="348"
+                          TabIndex="8" 
+                          Height="28"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Grid.Row="3" x:Name="gbUwagi"
+        	Margin="10,0,10,0" 
+        	FontSize="14" 
+        	FontWeight="SemiBold" 
+        	VerticalAlignment="Top" 
+        	Foreground="Green" 
+        	FontStyle="Italic" 
+        	BorderBrush="Green" 
+        	MinHeight="190">
+            <GroupBox.Header>Uwagi</GroupBox.Header>
+            <Grid >
+                <TextBox x:Name="txtUwagi" 
+                         FontStyle="Normal"
+                         FontWeight="Normal"
+                         FontSize="14"
+                         Margin="10,5,10,5"
+                         MinWidth="300"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Visible"
+                         TabIndex="11" Grid.ColumnSpan="2" 
+                         HorizontalContentAlignment="Stretch" 
+                         VerticalContentAlignment="Stretch" TextChanged="TextChanged"/>
+            </Grid>
+        </GroupBox>
+        <Grid Grid.Row="4" 
+              MaxWidth="815" 
+              Margin="10,0,10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" x:Name="btWyczysc" Click="btWyczysc_Click"
+                    Content="Wyczyść"
+                   Width="90"
+                 FontSize="16"
+                    VerticalContentAlignment="Center"
+                    Padding="15,2" 
+                    Margin="5,0" 
+                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FF20B83B" Offset="1"/>
+                        <GradientStop Color="White"/>
+                    </LinearGradientBrush>
+                </Button.Background>
+            </Button>
+            <Button Grid.Column="0" x:Name="btUwagi" Click="btUwagi_Click"
+                    Content="Uwagi"
+                    Width="90"
+                    TabIndex="10"
+                    FontSize="16"
+                    VerticalContentAlignment="Center"
+                    Padding="15,2" 
+                    Margin="5,0" 
+                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FF20B83B" Offset="1"/>
+                        <GradientStop Color="White"/>
+                    </LinearGradientBrush>
+                </Button.Background>
+            </Button>
+            <Button Grid.Column="2" x:Name="btZapisz" Click="btZapisz_Click"
+                    TabIndex="9"
+                    Content="Zapisz"
+                   FontSize="16"
+                    VerticalContentAlignment="Center"
+                    Padding="15,2" 
+                    Margin="5,0" 
+                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FF20B83B" Offset="1"/>
+                        <GradientStop Color="White"/>
+                    </LinearGradientBrush>
+                </Button.Background>
+            </Button>
+        </Grid>
+        <Label Grid.Row="5" x:Name="labUwagi"
+               MaxWidth="815"  
+               Foreground="Red" 
+               MinWidth="100" 
+               MinHeight="25"  
+               Margin="10,0,10,0" 
+               BorderBrush="Black" 
+               FontSize="14"  
+               Width="Auto" 
+               FontStyle="Italic" VerticalContentAlignment="Bottom" HorizontalContentAlignment="Center" VerticalAlignment="Bottom"/>
+        <ComboBox Name="cmbTyp"
+                  Text="Wybierz..."
+                  HorizontalAlignment="Left" 
+                  Margin="290,0,0,0" 
+                  VerticalAlignment="Top" 
+                  FontSize="14" 
+                  FontWeight="Bold" 
+                  FontStyle="Italic" 
+                  Width="150" SelectionChanged="cmbTyp_SelectionChanged"/>
+
+    </Grid>
+</Page>
