@@ -65,17 +65,7 @@ namespace GabinetLekarski.Strony
         public List<object> listaStron = new List<object>();
 
         #endregion
-        #region Przykłady konwersji godziny ze stringu na format DateTime
-
-        //datePicker.SelectedDate = DateTime.ParseExact("1972-01-09", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture); 
-        //DateTime godzX = DateTime.ParseExact(godzinaWizyty, "HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        //DateTime godzX = DateTime.ParseExact(godzinaWizyty, "H:mm:ss", null, System.Globalization.DateTimeStyles.None);
-        //DateTime godzX = DateTime.ParseExact(godzinaWizyty, "HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture).ToShortTimeString();
-        //DateTime godzX = DateTime.ParseExact("2009-05-08 14:40:52,531", "yyyy-MM-dd HH:mm:ss,fff", System.Globalization.CultureInfo.InvariantCulture);
-        //DateTime godzX = DateTime.ParseExact("14:40:52,531", "HH:mm:ss,fff", System.Globalization.CultureInfo.InvariantCulture);
-
-        #endregion
-
+        
         #region Paramerty startowe formularza
 
         // W zależności od ustawionego parametru, do ramki strony 'StronaPacjent_Wizyta' będzie ładowana odpowiednia strona.
@@ -178,7 +168,6 @@ namespace GabinetLekarski.Strony
                     using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DBCS"].ConnectionString))
                     {
                         string IDWizyta = pacjent.IDWizyta;
-                        query = "DELETE FROM tabWizyta WHERE (IDWizyta = 1045)";
                         query = "DELETE FROM tabWizyta WHERE (IDWizyta = " + IDWizyta + ")";
                         SqlCommand cmd = new SqlCommand(query, con);
                         cmd.Parameters.AddWithValue("@IDWizyta", IDWizyta);
